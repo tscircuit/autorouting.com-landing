@@ -1,5 +1,4 @@
 import { FileDropZone } from "@/components/file-drop-zone"
-import { GithubBadge } from "@/components/github-badge"
 import { WaitlistForm } from "@/components/waitlist-form"
 import { InteractiveCanvas } from "@/components/interactive-canvas"
 
@@ -39,7 +38,7 @@ export default function Home() {
 
       {/* Bottom bar */}
       <footer className="flex items-center justify-between pt-4">
-        <GithubBadge />
+        <span className="text-xs text-muted-foreground">&copy; tscircuit Inc.</span>
         <WaitlistForm />
       </footer>
     </main>
