@@ -8,9 +8,19 @@ export default function Home() {
     <main className="flex h-screen flex-col p-4">
       {/* Top bar */}
       <header className="flex items-center justify-between">
-        <h1 className="text-sm font-medium text-foreground tracking-tight">
-          The World&apos;s Fastest Autorouter
-        </h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-sm font-medium text-foreground tracking-tight">
+            The World&apos;s Fastest Autorouter
+          </h1>
+          <a
+            href="https://blog.autorouting.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Blog
+          </a>
+        </div>
         <FileDropZone />
       </header>
 
