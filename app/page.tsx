@@ -38,7 +38,7 @@ export default function Home() {
 
       {/* Bottom bar */}
       <footer className="flex items-center justify-between pt-4">
-        <span className="text-xs text-muted-foreground">&copy; tscircuit Inc.</span>
+        <span className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} tscircuit Inc.</span>
         <WaitlistForm />
       </footer>
     </main>
