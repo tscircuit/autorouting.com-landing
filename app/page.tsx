@@ -1,0 +1,29 @@
+import { FileDropZone } from "@/components/file-drop-zone"
+import { GithubBadge } from "@/components/github-badge"
+import { WaitlistForm } from "@/components/waitlist-form"
+import { InteractiveCanvas } from "@/components/interactive-canvas"
+
+export default function Home() {
+  return (
+    <main className="flex h-screen flex-col p-4">
+      {/* Top bar */}
+      <header className="flex items-center justify-between">
+        <h1 className="text-sm font-medium text-foreground tracking-tight">
+          The World&apos;s Fastest Autorouter
+        </h1>
+        <FileDropZone />
+      </header>
+
+      {/* Canvas area */}
+      <div className="flex flex-1 flex-col gap-4 pt-4">
+        <InteractiveCanvas />
+      </div>
+
+      {/* Bottom bar */}
+      <footer className="flex items-center justify-between pt-4">
+        <GithubBadge />
+        <WaitlistForm />
+      </footer>
+    </main>
+  )
+}
