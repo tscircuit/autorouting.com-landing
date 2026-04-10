@@ -20,6 +20,14 @@ export default function Home() {
           >
             Blog
           </a>
+          <a
+            href="https://github.com/tscircuit/tscircuit-autorouter"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Github
+          </a>
         </div>
         <FileDropZone />
       </header>
