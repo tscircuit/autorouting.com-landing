@@ -38,7 +38,7 @@ export default function Home() {
 
       {/* Bottom bar */}
       <footer className="flex items-center justify-between pt-4">
-        <span className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} tscircuit Inc.</span>
+        <a href="https://tscircuit.com" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">&copy; {new Date().getFullYear()} tscircuit Inc.</a>
         <WaitlistForm />
       </footer>
     </main>
