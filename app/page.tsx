@@ -27,6 +27,14 @@ export default function Home() {
           >
             Github
           </a>
+          <a
+            href="https://tscircuit.com/join"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Discord
+          </a>
         </div>
         <FileDropZone />
       </header>
