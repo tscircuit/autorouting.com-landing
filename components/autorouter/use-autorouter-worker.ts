@@ -7,6 +7,7 @@ import type {
   AutorouterWorkerOutbound,
   AutorouterWorkerState,
   LoadedRouteProblem,
+  WorkerPerformanceProfile,
 } from "@/lib/autorouter/types"
 
 function getWorkerState(snapshot: AutorouterSnapshot): AutorouterWorkerState {
@@ -21,7 +22,10 @@ function getWorkerState(snapshot: AutorouterSnapshot): AutorouterWorkerState {
   return "running"
 }
 
-export function useAutorouterWorker(problem: LoadedRouteProblem | null) {
+export function useAutorouterWorker(
+  problem: LoadedRouteProblem | null,
+  profile: WorkerPerformanceProfile = "default",
+) {
   const [snapshot, setSnapshot] = useState<AutorouterSnapshot | null>(null)
   const [workerState, setWorkerState] = useState<AutorouterWorkerState>("idle")
   const [workerError, setWorkerError] = useState<string | null>(null)
@@ -69,6 +73,7 @@ export function useAutorouterWorker(problem: LoadedRouteProblem | null) {
     const message: AutorouterWorkerInbound = {
       type: "start",
       srj: problem.srj,
+      profile,
     }
 
     worker.postMessage(message)
@@ -76,7 +81,7 @@ export function useAutorouterWorker(problem: LoadedRouteProblem | null) {
     return () => {
       worker.terminate()
     }
-  }, [problem?.id])
+  }, [problem?.id, profile])
 
   return {
     snapshot,

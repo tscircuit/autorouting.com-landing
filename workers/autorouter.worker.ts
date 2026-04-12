@@ -1,15 +1,38 @@
 import { AutoroutingPipelineSolver } from "@tscircuit/capacity-autorouter"
-import { createSolvedTraceGraphics } from "@/lib/autorouter/graphics-conversion"
+import {
+  createSolvedTraceGraphics,
+  sanitizeRouteGraphics,
+} from "@/lib/autorouter/graphics-conversion"
 import type {
   AutorouterSnapshot,
   AutorouterWorkerInbound,
   AutorouterWorkerOutbound,
   SolverRenderMode,
+  WorkerPerformanceProfile,
 } from "@/lib/autorouter/types"
 
-const STEP_BUDGET_MS = 14
-const MAX_STEPS_PER_BATCH = 1500
-const SNAPSHOT_INTERVAL_MS = 80
+const WORKER_PROFILE_CONFIG: Record<
+  WorkerPerformanceProfile,
+  {
+    idleDelayMs: number
+    maxStepsPerBatch: number
+    snapshotIntervalMs: number
+    stepBudgetMs: number
+  }
+> = {
+  default: {
+    idleDelayMs: 0,
+    maxStepsPerBatch: 1500,
+    snapshotIntervalMs: 80,
+    stepBudgetMs: 14,
+  },
+  "mobile-safe": {
+    idleDelayMs: 6,
+    maxStepsPerBatch: 480,
+    snapshotIntervalMs: 650,
+    stepBudgetMs: 5,
+  },
+}
 
 let activeRunId = 0
 
@@ -33,7 +56,7 @@ function createSnapshot(
   const view =
     renderMode === "output-traces"
       ? createSolvedTraceGraphics(solver.getOutputSimpleRouteJson())
-      : solver.preview()
+      : sanitizeRouteGraphics(solver.preview(), { includeRects: false })
 
   return {
     renderMode,
@@ -57,6 +80,7 @@ function sleep(durationMs: number) {
 async function runSolver(message: AutorouterWorkerInbound, runId: number) {
   try {
     const solver = new AutoroutingPipelineSolver(message.srj)
+    const profileConfig = WORKER_PROFILE_CONFIG[message.profile ?? "default"]
     const startedAt = performance.now()
     let lastSnapshotAt = -Infinity
     let publishedTerminalSnapshot = false
@@ -71,8 +95,8 @@ async function runSolver(message: AutorouterWorkerInbound, runId: number) {
       let stepsThisBatch = 0
 
       while (
-        stepsThisBatch < MAX_STEPS_PER_BATCH &&
-        performance.now() - batchStartAt < STEP_BUDGET_MS &&
+        stepsThisBatch < profileConfig.maxStepsPerBatch &&
+        performance.now() - batchStartAt < profileConfig.stepBudgetMs &&
         !solver.solved &&
         !solver.failed
       ) {
@@ -85,7 +109,11 @@ async function runSolver(message: AutorouterWorkerInbound, runId: number) {
         ? "output-traces"
         : "preview"
 
-      if (now - lastSnapshotAt >= SNAPSHOT_INTERVAL_MS || solver.solved || solver.failed) {
+      if (
+        now - lastSnapshotAt >= profileConfig.snapshotIntervalMs ||
+        solver.solved ||
+        solver.failed
+      ) {
         postMessageToMain({
           type: "snapshot",
           snapshot: createSnapshot(solver, renderMode, startedAt),
@@ -94,7 +122,7 @@ async function runSolver(message: AutorouterWorkerInbound, runId: number) {
         publishedTerminalSnapshot = solver.solved || solver.failed
       }
 
-      await sleep(0)
+      await sleep(profileConfig.idleDelayMs)
     }
 
     if (runId !== activeRunId || publishedTerminalSnapshot) {

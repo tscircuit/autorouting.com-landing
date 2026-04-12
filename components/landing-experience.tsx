@@ -2,6 +2,7 @@
 
 import { startTransition, useEffect, useState } from "react"
 import { ExamplesDropdown } from "@/components/autorouter/examples-dropdown"
+import { WorkerProfileIndicator } from "@/components/autorouter/worker-profile-indicator"
 import { InteractiveCanvas } from "@/components/interactive-canvas"
 import { SeveibarLink } from "@/components/seveibar-link"
 import { UploadKicadButton } from "@/components/upload-kicad-button"
@@ -9,7 +10,11 @@ import {
   loadDefaultProblem,
   loadExampleProblem,
 } from "@/lib/autorouter/problem-loader"
-import type { LoadedRouteProblem, ProblemExampleId } from "@/lib/autorouter/types"
+import type {
+  LoadedRouteProblem,
+  ProblemExampleId,
+  WorkerPerformanceProfile,
+} from "@/lib/autorouter/types"
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -23,6 +28,8 @@ export function LandingExperience() {
   const [problem, setProblem] = useState<LoadedRouteProblem | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [workerProfile, setWorkerProfile] =
+    useState<WorkerPerformanceProfile>("default")
 
   useEffect(() => {
     void restoreDefaultProblem()
@@ -101,18 +108,22 @@ export function LandingExperience() {
           problem={problem}
           isLoading={isLoading}
           loadError={loadError}
+          onProfileChange={setWorkerProfile}
         />
       </div>
 
       <footer className="flex flex-col gap-3 border-t border-black/5 px-4 pb-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <a
-          href="https://tscircuit.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-        >
-          &copy; {new Date().getFullYear()} tscircuit Inc.
-        </a>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <a
+            href="https://tscircuit.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            &copy; {new Date().getFullYear()} tscircuit Inc.
+          </a>
+          <WorkerProfileIndicator profile={workerProfile} />
+        </div>
         <SeveibarLink />
       </footer>
     </main>

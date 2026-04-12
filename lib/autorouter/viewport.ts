@@ -100,6 +100,27 @@ export function zoomViewportAt(
   )
 }
 
+export function pinchViewport(
+  viewport: ViewportMatrices,
+  factor: number,
+  previousAnchorPx: WorldPoint,
+  nextAnchorPx: WorldPoint,
+): ViewportMatrices {
+  const clampedScale = clamp(viewport.scalePxPerMm * factor, 1.5, 220)
+  const adjustedFactor = clampedScale / viewport.scalePxPerMm
+
+  return createViewportFromMatrix(
+    compose(
+      translate(nextAnchorPx.x, nextAnchorPx.y),
+      scale(adjustedFactor, adjustedFactor),
+      translate(-previousAnchorPx.x, -previousAnchorPx.y),
+      viewport.mmToPx,
+    ),
+    viewport.size.width,
+    viewport.size.height,
+  )
+}
+
 export function mmToPxPoint(viewport: ViewportMatrices, point: WorldPoint) {
   return applyToPoint(viewport.mmToPx, point)
 }

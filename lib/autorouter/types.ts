@@ -1,8 +1,55 @@
-import { AutoroutingPipelineSolver } from "@tscircuit/capacity-autorouter"
+import type { AutoroutingPipelineSolver } from "@tscircuit/capacity-autorouter"
 
 export type RouteProblem = ConstructorParameters<typeof AutoroutingPipelineSolver>[0]
-export type RouteGraphics = ReturnType<AutoroutingPipelineSolver["preview"]>
 export type ProblemExampleId = "arduino-uno-minimal" | "keyboard"
+export type WorkerPerformanceProfile = "default" | "mobile-safe"
+
+export type RouteGraphicsPoint = {
+  x: number
+  y: number
+  layer?: string
+}
+
+export type RouteGraphicsLine = {
+  points: RouteGraphicsPoint[]
+  strokeColor?: string
+  strokeWidth?: number
+  strokeDash?: number[] | string
+}
+
+export type RouteGraphicsRect = {
+  center: {
+    x: number
+    y: number
+  }
+  width: number
+  height: number
+  fill?: string
+  stroke?: string
+  strokeWidth?: number
+  layer?: string
+}
+
+export type RouteGraphicsCircle = {
+  center?: {
+    x: number
+    y: number
+  }
+  x?: number
+  y?: number
+  radius?: number
+  r?: number
+  fill?: string
+  stroke?: string
+  strokeWidth?: number
+}
+
+export type RouteGraphics = {
+  rects?: RouteGraphicsRect[]
+  circles?: RouteGraphicsCircle[]
+  lines?: RouteGraphicsLine[]
+  points?: RouteGraphicsPoint[]
+}
 
 export type LoadedRouteProblem = {
   id: string
@@ -37,6 +84,7 @@ export type AutorouterSnapshot = {
 export type AutorouterWorkerInbound = {
   type: "start"
   srj: RouteProblem
+  profile?: WorkerPerformanceProfile
 }
 
 export type AutorouterWorkerOutbound =

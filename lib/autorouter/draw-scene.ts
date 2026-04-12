@@ -1,18 +1,16 @@
 import { getBoardOutline, getVisibleBounds, mmToPxPoint, type ViewportMatrices } from "@/lib/autorouter/viewport"
+import {
+  DEFAULT_TRACE_COLOR,
+  getCopperLayerColor,
+  isDefaultTraceColor,
+  PCB_VIEWER_COPPER_COLORS,
+} from "@/lib/autorouter/layer-colors"
 import type { RouteGraphics, RouteProblem } from "@/lib/autorouter/types"
 
 const PCB_VIEWER_BACKGROUND = "rgb(0, 16, 35)"
 const PCB_VIEWER_EDGE_CUTS = "rgb(208, 210, 205)"
 const PCB_VIEWER_GRID = "rgb(132, 132, 132)"
 const PCB_VIEWER_GRID_AXES = "rgb(194, 194, 194)"
-const PCB_VIEWER_COPPER_COLORS: Record<string, string> = {
-  top: "rgb(200, 52, 52)",
-  bottom: "rgb(77, 127, 196)",
-  inner1: "rgb(127, 200, 127)",
-  inner2: "rgb(206, 125, 44)",
-  in1: "rgb(127, 200, 127)",
-  in2: "rgb(206, 125, 44)",
-}
 
 const BACKGROUND_COLOR = PCB_VIEWER_BACKGROUND
 const BOARD_STROKE = withAlpha(PCB_VIEWER_EDGE_CUTS, 0.7)
@@ -21,6 +19,7 @@ const MAJOR_GRID = withAlpha(PCB_VIEWER_GRID_AXES, 0.22)
 const DEFAULT_OBSTACLE_FILL = "rgba(255,0,0,0.5)"
 const SOLID_OBSTACLE_FILL = PCB_VIEWER_COPPER_COLORS.top
 const BOTTOM_OBSTACLE_FILL = withAlpha(PCB_VIEWER_COPPER_COLORS.bottom, 0.5)
+const MAX_CANVAS_DPR = 2
 
 type RenderableCircle = NonNullable<RouteGraphics["circles"]>[number]
 type RenderableLine = NonNullable<RouteGraphics["lines"]>[number]
@@ -134,6 +133,17 @@ function isLowerLayerTrace(line: RenderableLine) {
   }
 
   return Array.isArray(line.strokeDash) && line.strokeDash.length > 0
+}
+
+function getLineStrokeColor(line: RenderableLine) {
+  const pointLayer = getLinePointLayer(line)
+  const layerColor = getCopperLayerColor(pointLayer)
+
+  if (!line.strokeColor || isDefaultTraceColor(line.strokeColor)) {
+    return layerColor ?? DEFAULT_TRACE_COLOR
+  }
+
+  return line.strokeColor
 }
 
 function getGridStep(scalePxPerMm: number) {
@@ -267,9 +277,11 @@ function drawLines(
       }
     })
 
+    const strokeColor = getLineStrokeColor(line)
+
     ctx.strokeStyle = lowerLayerTrace
-      ? makeOpaqueColor(line.strokeColor ?? "rgba(255, 255, 255, 0.85)")
-      : line.strokeColor ?? "rgba(255, 255, 255, 0.85)"
+      ? makeOpaqueColor(strokeColor)
+      : strokeColor
     ctx.lineWidth = Math.max(1, (line.strokeWidth ?? 0.15) * viewport.scalePxPerMm)
     ctx.lineJoin = "round"
     ctx.lineCap = "round"
@@ -339,7 +351,12 @@ function getCircleCenter(circle: RenderableCircle) {
     return circle.center
   }
 
-  if ("x" in circle && "y" in circle) {
+  if (
+    "x" in circle &&
+    "y" in circle &&
+    typeof circle.x === "number" &&
+    typeof circle.y === "number"
+  ) {
     return {
       x: circle.x,
       y: circle.y,
@@ -407,7 +424,7 @@ export function drawScene({
     return
   }
 
-  const dpr = window.devicePixelRatio || 1
+  const dpr = Math.min(window.devicePixelRatio || 1, MAX_CANVAS_DPR)
   const nextWidth = Math.round(width * dpr)
   const nextHeight = Math.round(height * dpr)
 
