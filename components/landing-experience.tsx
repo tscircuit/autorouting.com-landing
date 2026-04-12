@@ -1,11 +1,15 @@
 "use client"
 
 import { startTransition, useEffect, useState } from "react"
-import { FileDropZone } from "@/components/file-drop-zone"
+import { ExamplesDropdown } from "@/components/autorouter/examples-dropdown"
 import { InteractiveCanvas } from "@/components/interactive-canvas"
+import { UploadKicadButton } from "@/components/upload-kicad-button"
 import { WaitlistForm } from "@/components/waitlist-form"
-import { loadDefaultProblem, loadProblemFromFile } from "@/lib/autorouter/problem-loader"
-import type { LoadedRouteProblem } from "@/lib/autorouter/types"
+import {
+  loadDefaultProblem,
+  loadExampleProblem,
+} from "@/lib/autorouter/problem-loader"
+import type { LoadedRouteProblem, ProblemExampleId } from "@/lib/autorouter/types"
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -24,12 +28,12 @@ export function LandingExperience() {
     void restoreDefaultProblem()
   }, [])
 
-  async function restoreDefaultProblem() {
+  async function loadProblem(loadNextProblem: () => Promise<LoadedRouteProblem>) {
     setIsLoading(true)
     setLoadError(null)
 
     try {
-      const nextProblem = await loadDefaultProblem()
+      const nextProblem = await loadNextProblem()
 
       startTransition(() => {
         setProblem(nextProblem)
@@ -41,21 +45,12 @@ export function LandingExperience() {
     }
   }
 
-  async function handleProblemFile(file: File) {
-    setIsLoading(true)
-    setLoadError(null)
+  async function restoreDefaultProblem() {
+    await loadProblem(() => loadDefaultProblem())
+  }
 
-    try {
-      const nextProblem = await loadProblemFromFile(file)
-
-      startTransition(() => {
-        setProblem(nextProblem)
-      })
-    } catch (error) {
-      setLoadError(getErrorMessage(error))
-    } finally {
-      setIsLoading(false)
-    }
+  async function handleExampleSelect(exampleId: ProblemExampleId) {
+    await loadProblem(() => loadExampleProblem(exampleId))
   }
 
   return (
@@ -92,18 +87,11 @@ export function LandingExperience() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={restoreDefaultProblem}
+          <UploadKicadButton />
+          <ExamplesDropdown
+            currentExampleId={problem?.exampleId ?? null}
             disabled={isLoading}
-            className="h-9 rounded-md border border-foreground/15 px-3 text-xs text-foreground transition-colors hover:border-foreground/35 hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Use Default
-          </button>
-          <FileDropZone
-            currentLabel={problem?.sourceLabel}
-            disabled={isLoading}
-            onSelectFile={handleProblemFile}
+            onSelectExample={handleExampleSelect}
           />
         </div>
       </header>

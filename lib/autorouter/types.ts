@@ -2,12 +2,14 @@ import { AutoroutingPipelineSolver } from "@tscircuit/capacity-autorouter"
 
 export type RouteProblem = ConstructorParameters<typeof AutoroutingPipelineSolver>[0]
 export type RouteGraphics = ReturnType<AutoroutingPipelineSolver["preview"]>
+export type ProblemExampleId = "arduino-uno-minimal" | "keyboard"
 
 export type LoadedRouteProblem = {
   id: string
   displayName: string
   sourceLabel: string
   reportId?: string
+  exampleId?: ProblemExampleId
   srj: RouteProblem
 }
 

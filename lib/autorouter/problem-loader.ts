@@ -1,8 +1,12 @@
-import { applyArduinoUnoStaticSrjAdjustments } from "@/lib/autorouter/arduino-uno-static-srj"
-import type { LoadedRouteProblem, RouteProblem } from "@/lib/autorouter/types"
-
-const DEFAULT_PROBLEM_URL = "/fixtures/default-autorouter-problem.json"
-const DEFAULT_PROBLEM_NAME = "Arduino Uno bugreport46-ac4337"
+import {
+  DEFAULT_PROBLEM_EXAMPLE_ID,
+  getProblemExample,
+} from "@/lib/autorouter/problem-examples"
+import type {
+  LoadedRouteProblem,
+  ProblemExampleId,
+  RouteProblem,
+} from "@/lib/autorouter/types"
 
 type RouteProblemEnvelope = {
   autorouting_bug_report_id?: string
@@ -57,11 +61,13 @@ function extractRouteProblem(payload: unknown): {
 
 function createLoadedProblem({
   displayName,
+  exampleId,
   reportId,
   sourceLabel,
   srj,
 }: {
   displayName: string
+  exampleId?: ProblemExampleId
   reportId?: string
   sourceLabel: string
   srj: RouteProblem
@@ -71,28 +77,39 @@ function createLoadedProblem({
       globalThis.crypto?.randomUUID?.() ??
       `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     displayName,
+    exampleId,
     reportId,
     sourceLabel,
     srj,
   }
 }
 
-export async function loadDefaultProblem() {
-  const response = await fetch(DEFAULT_PROBLEM_URL)
+async function loadProblemPayload(url: string) {
+  const response = await fetch(url)
 
   if (!response.ok) {
-    throw new Error(`Unable to fetch the bundled fixture (${response.status}).`)
+    throw new Error(`Unable to fetch the route fixture (${response.status}).`)
   }
 
-  const payload = await response.json()
-  const { reportId, srj } = extractRouteProblem(payload)
+  return response.json()
+}
+
+export async function loadExampleProblem(exampleId: ProblemExampleId) {
+  const example = getProblemExample(exampleId)
+  const payload = await loadProblemPayload(example.url)
+  const { reportId, srj, title } = extractRouteProblem(payload)
 
   return createLoadedProblem({
-    displayName: DEFAULT_PROBLEM_NAME,
+    displayName: example.displayName || title?.trim() || "Route example",
+    exampleId: example.id,
     reportId,
-    sourceLabel: "Default fixture",
-    srj: applyArduinoUnoStaticSrjAdjustments(srj),
+    sourceLabel: example.sourceLabel,
+    srj: example.transform ? example.transform(srj) : srj,
   })
+}
+
+export async function loadDefaultProblem() {
+  return loadExampleProblem(DEFAULT_PROBLEM_EXAMPLE_ID)
 }
 
 export async function loadProblemFromFile(file: File) {
