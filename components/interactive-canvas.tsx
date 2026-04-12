@@ -24,7 +24,7 @@ export function InteractiveCanvas({
       : null
 
   return (
-    <div className="relative min-h-0 flex-1 overflow-hidden border border-slate-200 bg-[#f8fafc] shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+    <div className="relative min-h-0 flex-1 overflow-hidden bg-[#f8fafc]">
       <GraphicsCanvas
         key={problem?.id ?? "empty"}
         problem={problem}
