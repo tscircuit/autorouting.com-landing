@@ -3,8 +3,8 @@
 import { startTransition, useEffect, useState } from "react"
 import { ExamplesDropdown } from "@/components/autorouter/examples-dropdown"
 import { InteractiveCanvas } from "@/components/interactive-canvas"
+import { SeveibarLink } from "@/components/seveibar-link"
 import { UploadKicadButton } from "@/components/upload-kicad-button"
-import { WaitlistForm } from "@/components/waitlist-form"
 import {
   loadDefaultProblem,
   loadExampleProblem,
@@ -113,7 +113,7 @@ export function LandingExperience() {
         >
           &copy; {new Date().getFullYear()} tscircuit Inc.
         </a>
-        <WaitlistForm />
+        <SeveibarLink />
       </footer>
     </main>
   )
