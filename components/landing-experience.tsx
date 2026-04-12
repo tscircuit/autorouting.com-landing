@@ -54,7 +54,7 @@ export function LandingExperience() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col gap-4 p-4">
+    <main className="flex h-dvh flex-col gap-4 overflow-hidden p-4">
       <header className="flex flex-col gap-4 border-b border-black/5 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <h1 className="text-sm font-medium tracking-tight text-foreground">
@@ -96,7 +96,7 @@ export function LandingExperience() {
         </div>
       </header>
 
-      <div className="flex min-h-[60vh] flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <InteractiveCanvas
           problem={problem}
           isLoading={isLoading}

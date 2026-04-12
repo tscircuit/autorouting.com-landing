@@ -1,17 +1,18 @@
 import { getBoardOutline, getVisibleBounds, mmToPxPoint, type ViewportMatrices } from "@/lib/autorouter/viewport"
 import type { RouteGraphics, RouteProblem } from "@/lib/autorouter/types"
 
-const BACKGROUND_COLOR = "#0c1118"
-const BOARD_FILL = "rgba(59, 130, 246, 0.08)"
-const BOARD_STROKE = "rgba(255, 255, 255, 0.18)"
-const MINOR_GRID = "rgba(255, 255, 255, 0.035)"
-const MAJOR_GRID = "rgba(255, 255, 255, 0.075)"
+const BACKGROUND_COLOR = "#f8fafc"
+const BOARD_STROKE = "rgba(15, 23, 42, 0.18)"
+const MINOR_GRID = "rgba(15, 23, 42, 0.035)"
+const MAJOR_GRID = "rgba(15, 23, 42, 0.07)"
 
 type RenderableCircle = NonNullable<RouteGraphics["circles"]>[number]
 
-function parseDash(strokeDash: unknown) {
+function parseDash(strokeDash: unknown, scalePxPerMm: number) {
   if (Array.isArray(strokeDash)) {
-    return strokeDash.filter((value): value is number => typeof value === "number")
+    return strokeDash
+      .filter((value): value is number => typeof value === "number" && value > 0)
+      .map((value) => Math.max(1, value * scalePxPerMm))
   }
 
   if (typeof strokeDash === "string") {
@@ -19,6 +20,7 @@ function parseDash(strokeDash: unknown) {
       .split(/[ ,]+/)
       .map((value) => Number(value))
       .filter((value) => Number.isFinite(value) && value > 0)
+      .map((value) => Math.max(1, value * scalePxPerMm))
   }
 
   return []
@@ -104,10 +106,8 @@ function drawBoard(
   })
 
   ctx.closePath()
-  ctx.fillStyle = BOARD_FILL
   ctx.strokeStyle = BOARD_STROKE
   ctx.lineWidth = 1.5
-  ctx.fill()
   ctx.stroke()
   ctx.restore()
 }
@@ -135,9 +135,11 @@ function drawLines(
       }
     })
 
-    ctx.strokeStyle = line.strokeColor ?? "rgba(255, 255, 255, 0.85)"
+    ctx.strokeStyle = line.strokeColor ?? "rgba(15, 23, 42, 0.82)"
     ctx.lineWidth = Math.max(1, (line.strokeWidth ?? 0.15) * viewport.scalePxPerMm)
-    ctx.setLineDash(parseDash(line.strokeDash))
+    ctx.lineJoin = "round"
+    ctx.lineCap = "round"
+    ctx.setLineDash(parseDash(line.strokeDash, viewport.scalePxPerMm))
     ctx.stroke()
     ctx.restore()
   }
@@ -246,7 +248,7 @@ function drawPoints(
     ctx.save()
     ctx.beginPath()
     ctx.arc(screenPoint.x, screenPoint.y, radius, 0, Math.PI * 2)
-    ctx.fillStyle = point.color ?? point.fill ?? "#f8fafc"
+    ctx.fillStyle = point.color ?? point.fill ?? "#0f172a"
     ctx.fill()
     ctx.restore()
   }

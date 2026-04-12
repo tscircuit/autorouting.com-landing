@@ -1,30 +1,20 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import type { PointerEvent, ReactNode, WheelEvent } from "react"
+import type { PointerEvent, WheelEvent } from "react"
 import { drawScene } from "@/lib/autorouter/draw-scene"
 import { createInputSrjGraphics } from "@/lib/autorouter/graphics-conversion"
 import {
   createViewport,
   panViewport,
-  pxToMmPoint,
   zoomViewportAt,
   type ViewportMatrices,
 } from "@/lib/autorouter/viewport"
 import type { LoadedRouteProblem, RouteGraphics } from "@/lib/autorouter/types"
 
-type OverlayRenderProps = {
-  cursorMm: { x: number; y: number } | null
-  resetView: () => void
-  zoomIn: () => void
-  zoomOut: () => void
-  zoomPxPerMm: number
-}
-
 type GraphicsCanvasProps = {
   problem: LoadedRouteProblem | null
   scene: RouteGraphics | null
-  children?: (props: OverlayRenderProps) => ReactNode
 }
 
 type DragState = {
@@ -36,7 +26,6 @@ type DragState = {
 export function GraphicsCanvas({
   problem,
   scene,
-  children,
 }: GraphicsCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -44,7 +33,6 @@ export function GraphicsCanvas({
   const [size, setSize] = useState({ width: 0, height: 0 })
   const [viewport, setViewport] = useState<ViewportMatrices | null>(null)
   const [inputScene, setInputScene] = useState<RouteGraphics | null>(null)
-  const [cursorMm, setCursorMm] = useState<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     const element = containerRef.current
@@ -128,43 +116,12 @@ export function GraphicsCanvas({
     }
   }
 
-  function updateCursor(clientX: number, clientY: number) {
-    if (!viewport) {
-      return
-    }
-
-    const canvasPoint = getCanvasPoint(clientX, clientY)
-
-    if (!canvasPoint) {
-      return
-    }
-
-    setCursorMm(pxToMmPoint(viewport, canvasPoint))
-  }
-
   function resetView() {
     if (!problem || size.width === 0 || size.height === 0) {
       return
     }
 
     setViewport(createViewport(problem.srj.bounds, size.width, size.height))
-  }
-
-  function zoomAtCenter(factor: number) {
-    if (!viewport) {
-      return
-    }
-
-    setViewport((current) => {
-      if (!current) {
-        return current
-      }
-
-      return zoomViewportAt(current, factor, {
-        x: size.width / 2,
-        y: size.height / 2,
-      })
-    })
   }
 
   function handlePointerDown(event: PointerEvent<HTMLCanvasElement>) {
@@ -174,12 +131,9 @@ export function GraphicsCanvas({
       clientX: event.clientX,
       clientY: event.clientY,
     }
-    updateCursor(event.clientX, event.clientY)
   }
 
   function handlePointerMove(event: PointerEvent<HTMLCanvasElement>) {
-    updateCursor(event.clientX, event.clientY)
-
     const dragState = dragStateRef.current
 
     if (!viewport || !dragState || dragState.pointerId !== event.pointerId) {
@@ -217,7 +171,6 @@ export function GraphicsCanvas({
 
   function handlePointerLeave() {
     dragStateRef.current = null
-    setCursorMm(null)
   }
 
   function handleWheel(event: WheelEvent<HTMLCanvasElement>) {
@@ -233,15 +186,21 @@ export function GraphicsCanvas({
       return
     }
 
-    const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12
+    if (event.deltaY === 0) {
+      return
+    }
+
+    const factor = event.deltaY < 0 ? 1.03 : 0.97
     const nextViewport = zoomViewportAt(viewport, factor, canvasPoint)
 
     setViewport(() => nextViewport)
-    setCursorMm(pxToMmPoint(nextViewport, canvasPoint))
   }
 
   return (
-    <div ref={containerRef} className="relative h-full w-full">
+    <div
+      ref={containerRef}
+      className="relative h-full w-full overflow-hidden overscroll-none"
+    >
       <canvas
         ref={canvasRef}
         onPointerDown={handlePointerDown}
@@ -251,15 +210,8 @@ export function GraphicsCanvas({
         onPointerLeave={handlePointerLeave}
         onWheel={handleWheel}
         onDoubleClick={resetView}
-        className="h-full w-full touch-none cursor-grab active:cursor-grabbing"
+        className="block h-full w-full cursor-grab touch-none overscroll-none active:cursor-grabbing"
       />
-      {children?.({
-        cursorMm,
-        resetView,
-        zoomIn: () => zoomAtCenter(1.15),
-        zoomOut: () => zoomAtCenter(1 / 1.15),
-        zoomPxPerMm: viewport?.scalePxPerMm ?? 0,
-      })}
     </div>
   )
 }
