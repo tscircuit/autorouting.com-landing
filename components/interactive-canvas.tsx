@@ -1,21 +1,41 @@
-export function InteractiveCanvas() {
+"use client"
+
+import { CanvasStatusPanel } from "@/components/autorouter/canvas-status-panel"
+import { GraphicsCanvas } from "@/components/autorouter/graphics-canvas"
+import { useAutorouterWorker } from "@/components/autorouter/use-autorouter-worker"
+import type { LoadedRouteProblem } from "@/lib/autorouter/types"
+
+type InteractiveCanvasProps = {
+  problem: LoadedRouteProblem | null
+  isLoading: boolean
+  loadError: string | null
+}
+
+export function InteractiveCanvas({
+  problem,
+  isLoading,
+  loadError,
+}: InteractiveCanvasProps) {
+  const { snapshot, workerError, workerState } = useAutorouterWorker(problem)
+
   return (
-    <div className="relative flex-1 rounded-lg border border-foreground/[0.06] bg-foreground/[0.02]">
-      {/* Subtle dot grid pattern */}
-      <div
-        className="absolute inset-0 rounded-lg"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, oklch(0.145 0 0 / 0.07) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
-        }}
-      />
-      {/* Placeholder center text */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <p className="text-xs text-muted-foreground/40 select-none tracking-wide uppercase">
-          Interactive autorouting canvas
-        </p>
-      </div>
+    <div className="relative flex-1 overflow-hidden rounded-[1.5rem] border border-black/8 bg-[#0c1118] shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
+      <GraphicsCanvas key={problem?.id ?? "empty"} problem={problem} scene={snapshot?.view ?? null}>
+        {({ cursorMm, resetView, zoomIn, zoomOut, zoomPxPerMm }) => (
+          <CanvasStatusPanel
+            problem={problem}
+            snapshot={snapshot}
+            workerState={workerState}
+            isLoading={isLoading}
+            loadError={loadError ?? workerError}
+            cursorMm={cursorMm}
+            zoomPxPerMm={zoomPxPerMm}
+            onResetView={resetView}
+            onZoomIn={zoomIn}
+            onZoomOut={zoomOut}
+          />
+        )}
+      </GraphicsCanvas>
     </div>
   )
 }

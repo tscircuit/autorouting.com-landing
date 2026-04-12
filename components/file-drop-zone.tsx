@@ -1,37 +1,57 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState } from "react"
+import type { ChangeEvent, DragEvent } from "react"
 import { Upload } from "lucide-react"
 
-export function FileDropZone() {
+type FileDropZoneProps = {
+  currentLabel?: string | null
+  disabled?: boolean
+  onSelectFile: (file: File) => void | Promise<void>
+}
+
+export function FileDropZone({
+  currentLabel,
+  disabled = false,
+  onSelectFile,
+}: FileDropZoneProps) {
   const [isDragging, setIsDragging] = useState(false)
-  const [fileName, setFileName] = useState<string | null>(null)
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file) {
-      setFileName(file.name)
+  function handleSelectedFile(file: File | null | undefined) {
+    if (!file || disabled) {
+      return
     }
-  }, [])
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setFileName(file.name)
+    void onSelectFile(file)
+  }
+
+  function handleDragOver(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault()
+
+    if (!disabled) {
+      setIsDragging(true)
     }
-  }, [])
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault()
+    setIsDragging(false)
+  }
+
+  function handleDrop(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault()
+    setIsDragging(false)
+    handleSelectedFile(event.dataTransfer.files[0])
+  }
+
+  function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
+    handleSelectedFile(event.target.files?.[0])
+    event.target.value = ""
+  }
+
+  const label = disabled
+    ? "Loading fixture..."
+    : currentLabel ?? "Drop autorouter JSON"
 
   return (
     <label
@@ -39,21 +59,21 @@ export function FileDropZone() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`
-        flex items-center gap-2 cursor-pointer px-3 py-2 text-xs
-        border border-dashed rounded-md transition-colors
+        flex h-9 max-w-[18rem] items-center gap-2 rounded-md border border-dashed px-3 text-xs transition-colors
+        ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}
         ${isDragging
           ? "border-foreground bg-foreground/5"
           : "border-foreground/20 hover:border-foreground/40"
         }
       `}
+      title={label}
     >
-      <Upload className="h-3.5 w-3.5 text-muted-foreground" />
-      <span className="text-muted-foreground">
-        {fileName ? fileName : "Drop .kicad_pcb"}
-      </span>
+      <Upload className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <span className="truncate text-muted-foreground">{label}</span>
       <input
         type="file"
-        accept=".kicad_pcb"
+        accept=".json,application/json"
+        disabled={disabled}
         onChange={handleFileSelect}
         className="sr-only"
       />
