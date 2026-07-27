@@ -5,7 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@tscircuit/internal-dynamic-import@0.0.13': bc9be08f73c5da5838245f21ea830f93fa5673d8792318d9182e43b3e3c91a98
+  '@tscircuit/internal-dynamic-import@0.0.13':
+    hash: bc9be08f73c5da5838245f21ea830f93fa5673d8792318d9182e43b3e3c91a98
+    path: patches/@tscircuit__internal-dynamic-import@0.0.13.patch
 
 importers:
 
