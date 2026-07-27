@@ -4,13 +4,18 @@ import { useEffect, useState } from "react"
 import { GraphicsCanvas } from "@/components/autorouter/graphics-canvas"
 import { StartOverlay } from "@/components/autorouter/start-overlay"
 import { useAutorouterWorker } from "@/components/autorouter/use-autorouter-worker"
-import type { LoadedRouteProblem, WorkerPerformanceProfile } from "@/lib/autorouter/types"
+import type {
+  LoadedRouteProblem,
+  RouteProblem,
+  WorkerPerformanceProfile,
+} from "@/lib/autorouter/types"
 
 type InteractiveCanvasProps = {
   problem: LoadedRouteProblem | null
   isLoading: boolean
   loadError: string | null
   onProfileChange?: (profile: WorkerPerformanceProfile) => void
+  onRoutedProblemChange?: (problem: RouteProblem | null) => void
 }
 
 export function InteractiveCanvas({
@@ -18,12 +23,16 @@ export function InteractiveCanvas({
   isLoading,
   loadError,
   onProfileChange,
+  onRoutedProblemChange,
 }: InteractiveCanvasProps) {
   const [hasStartedSolver, setHasStartedSolver] = useState(false)
   const [workerProfile, setWorkerProfile] =
     useState<WorkerPerformanceProfile>("default")
   const activeProblem = hasStartedSolver ? problem : null
-  const { snapshot, workerError } = useAutorouterWorker(activeProblem, workerProfile)
+  const { snapshot, workerError } = useAutorouterWorker(
+    activeProblem,
+    workerProfile,
+  )
   const errorMessage = loadError ?? workerError
   const emptyMessage = isLoading
     ? "Loading example..."
@@ -38,8 +47,10 @@ export function InteractiveCanvas({
       deviceMemory?: number
     }
     const prefersCoarsePointer = window.matchMedia("(pointer: coarse)").matches
-    const lowCoreCount = navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 4
-    const lowMemory = typeof nav.deviceMemory === "number" && nav.deviceMemory <= 4
+    const lowCoreCount =
+      navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 4
+    const lowMemory =
+      typeof nav.deviceMemory === "number" && nav.deviceMemory <= 4
 
     if (prefersCoarsePointer || lowCoreCount || lowMemory) {
       setWorkerProfile("mobile-safe")
@@ -49,6 +60,10 @@ export function InteractiveCanvas({
   useEffect(() => {
     onProfileChange?.(workerProfile)
   }, [onProfileChange, workerProfile])
+
+  useEffect(() => {
+    onRoutedProblemChange?.(snapshot?.outputSrj ?? null)
+  }, [onRoutedProblemChange, snapshot?.outputSrj])
 
   return (
     <div className="relative min-h-0 flex-1 overflow-hidden bg-[rgb(0,16,35)]">

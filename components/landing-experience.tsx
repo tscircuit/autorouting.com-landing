@@ -3,16 +3,20 @@
 import { startTransition, useEffect, useState } from "react"
 import { ExamplesDropdown } from "@/components/autorouter/examples-dropdown"
 import { WorkerProfileIndicator } from "@/components/autorouter/worker-profile-indicator"
+import { DownloadRoutedKicadButton } from "@/components/download-routed-kicad-button"
 import { InteractiveCanvas } from "@/components/interactive-canvas"
 import { SeveibarLink } from "@/components/seveibar-link"
 import { UploadKicadButton } from "@/components/upload-kicad-button"
 import {
   loadDefaultProblem,
   loadExampleProblem,
+  loadProblemFromKicadFile,
 } from "@/lib/autorouter/problem-loader"
+import { downloadRoutedKicad } from "@/lib/autorouter/download-routed-kicad"
 import type {
   LoadedRouteProblem,
   ProblemExampleId,
+  RouteProblem,
   WorkerPerformanceProfile,
 } from "@/lib/autorouter/types"
 
@@ -27,7 +31,9 @@ function getErrorMessage(error: unknown) {
 export function LandingExperience() {
   const [problem, setProblem] = useState<LoadedRouteProblem | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isDownloading, setIsDownloading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [routedProblem, setRoutedProblem] = useState<RouteProblem | null>(null)
   const [workerProfile, setWorkerProfile] =
     useState<WorkerPerformanceProfile>("default")
 
@@ -35,9 +41,12 @@ export function LandingExperience() {
     void restoreDefaultProblem()
   }, [])
 
-  async function loadProblem(loadNextProblem: () => Promise<LoadedRouteProblem>) {
+  async function loadProblem(
+    loadNextProblem: () => Promise<LoadedRouteProblem>,
+  ) {
     setIsLoading(true)
     setLoadError(null)
+    setRoutedProblem(null)
 
     try {
       const nextProblem = await loadNextProblem()
@@ -58,6 +67,30 @@ export function LandingExperience() {
 
   async function handleExampleSelect(exampleId: ProblemExampleId) {
     await loadProblem(() => loadExampleProblem(exampleId))
+  }
+
+  async function handleKicadFileSelect(file: File) {
+    await loadProblem(() => loadProblemFromKicadFile(file))
+  }
+
+  async function handleDownloadRoutedKicad() {
+    if (!problem?.circuitJson || !routedProblem) {
+      return
+    }
+
+    setIsDownloading(true)
+    setLoadError(null)
+
+    try {
+      await downloadRoutedKicad({
+        problem,
+        routedProblem,
+      })
+    } catch (error) {
+      setLoadError(getErrorMessage(error))
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   return (
@@ -94,7 +127,18 @@ export function LandingExperience() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <UploadKicadButton />
+          <UploadKicadButton
+            disabled={isLoading}
+            isLoading={isLoading}
+            onFileSelect={handleKicadFileSelect}
+          />
+          {problem?.circuitJson ? (
+            <DownloadRoutedKicadButton
+              disabled={!routedProblem}
+              isLoading={isDownloading}
+              onDownload={handleDownloadRoutedKicad}
+            />
+          ) : null}
           <ExamplesDropdown
             currentExampleId={problem?.exampleId ?? null}
             disabled={isLoading}
@@ -109,6 +153,7 @@ export function LandingExperience() {
           isLoading={isLoading}
           loadError={loadError}
           onProfileChange={setWorkerProfile}
+          onRoutedProblemChange={setRoutedProblem}
         />
       </div>
 

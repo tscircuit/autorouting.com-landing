@@ -1,0 +1,4 @@
+allowBuilds:
+  sharp: false
+patchedDependencies:
+  "@tscircuit/internal-dynamic-import@0.0.13": patches/@tscircuit__internal-dynamic-import@0.0.13.patch
