@@ -88,6 +88,11 @@ function getRect(value: unknown): RouteGraphicsRect | null {
     stroke: typeof value.stroke === "string" ? value.stroke : undefined,
     strokeWidth: isFiniteNumber(value.strokeWidth) ? value.strokeWidth : undefined,
     layer: typeof value.layer === "string" ? value.layer : undefined,
+    ccwRotationDegrees: isFiniteNumber(value.ccwRotationDegrees)
+      ? value.ccwRotationDegrees
+      : isFiniteNumber(value.ccw_rotation)
+        ? value.ccw_rotation
+        : undefined,
   }
 }
 
@@ -176,6 +181,7 @@ function createObstacleRect(
     height: obstacle.height,
     fill: DEFAULT_OBSTACLE_FILL,
     layer: formatObstacleLayer(obstacle, layerCount),
+    ccwRotationDegrees: obstacle.ccwRotationDegrees,
   }
 }
 
