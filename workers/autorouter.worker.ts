@@ -1,4 +1,3 @@
-import { AutoroutingPipelineSolver } from "@tscircuit/capacity-autorouter"
 import {
   createSolvedTraceGraphics,
   sanitizeRouteGraphics,
@@ -10,6 +9,31 @@ import type {
   SolverRenderMode,
   WorkerPerformanceProfile,
 } from "@/lib/autorouter/types"
+
+const AUTOROUTER_ESM_URL =
+  "https://jscdn.tscircuit.com/@tscircuit/capacity-autorouter/latest/+esm"
+
+type RuntimeAutorouterSolver = {
+  solved: boolean
+  failed: boolean
+  error: string | null
+  iterations: number
+  progress: number
+  step: () => void
+  preview: () => {
+    rects?: unknown[]
+    circles?: unknown[]
+    lines?: unknown[]
+  }
+  getCurrentPhase?: () => string
+  getOutputSimpleRouteJson: () => AutorouterWorkerInbound["srj"]
+}
+
+type AutorouterRuntimeModule = {
+  AutoroutingPipelineSolver7_MultiGraph?: new (
+    srj: AutorouterWorkerInbound["srj"],
+  ) => RuntimeAutorouterSolver
+}
 
 const WORKER_PROFILE_CONFIG: Record<
   WorkerPerformanceProfile,
@@ -49,7 +73,7 @@ function getErrorMessage(error: unknown) {
 }
 
 function createSnapshot(
-  solver: AutoroutingPipelineSolver,
+  solver: RuntimeAutorouterSolver,
   renderMode: SolverRenderMode,
   startedAt: number,
 ): AutorouterSnapshot {
@@ -77,9 +101,32 @@ function sleep(durationMs: number) {
   })
 }
 
+async function loadPipeline7() {
+  const autorouterModule = (await import(
+    /* webpackIgnore: true */
+    /* @vite-ignore */
+    AUTOROUTER_ESM_URL
+  )) as AutorouterRuntimeModule
+  const Pipeline7 = autorouterModule.AutoroutingPipelineSolver7_MultiGraph
+
+  if (typeof Pipeline7 !== "function") {
+    throw new Error(
+      "The latest @tscircuit/capacity-autorouter package does not export Pipeline7.",
+    )
+  }
+
+  return Pipeline7
+}
+
 async function runSolver(message: AutorouterWorkerInbound, runId: number) {
   try {
-    const solver = new AutoroutingPipelineSolver(message.srj)
+    const Pipeline7 = await loadPipeline7()
+
+    if (runId !== activeRunId) {
+      return
+    }
+
+    const solver = new Pipeline7(message.srj)
     const profileConfig = WORKER_PROFILE_CONFIG[message.profile ?? "default"]
     const startedAt = performance.now()
     let lastSnapshotAt = -Infinity

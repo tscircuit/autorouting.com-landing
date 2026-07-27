@@ -9,6 +9,7 @@ import { UploadKicadButton } from "@/components/upload-kicad-button"
 import {
   loadDefaultProblem,
   loadExampleProblem,
+  loadProblemFromKicadFile,
 } from "@/lib/autorouter/problem-loader"
 import type {
   LoadedRouteProblem,
@@ -60,6 +61,10 @@ export function LandingExperience() {
     await loadProblem(() => loadExampleProblem(exampleId))
   }
 
+  async function handleKicadFileSelect(file: File) {
+    await loadProblem(() => loadProblemFromKicadFile(file))
+  }
+
   return (
     <main className="flex h-dvh flex-col overflow-hidden">
       <header className="flex flex-col gap-4 border-b border-black/5 px-4 pb-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
@@ -94,7 +99,11 @@ export function LandingExperience() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <UploadKicadButton />
+          <UploadKicadButton
+            disabled={isLoading}
+            isLoading={isLoading}
+            onFileSelect={handleKicadFileSelect}
+          />
           <ExamplesDropdown
             currentExampleId={problem?.exampleId ?? null}
             disabled={isLoading}

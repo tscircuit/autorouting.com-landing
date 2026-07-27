@@ -92,9 +92,6 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: 1.2.8
         version: 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@tscircuit/capacity-autorouter':
-        specifier: ^0.0.425
-        version: 0.0.425(typescript@5.7.3)
       '@vercel/analytics':
         specifier: 1.6.1
         version: 1.6.1(next@16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
@@ -1174,14 +1171,6 @@ packages:
   '@tailwindcss/postcss@4.2.0':
     resolution: {integrity: sha512-u6YBacGpOm/ixPfKqfgrJEjMfrYmPD7gEFRoygS/hnQaRtV0VCBdpkx5Ouw9pnaLRwwlgGCuJw8xLpaR0hOrQg==}
 
-  '@tscircuit/capacity-autorouter@0.0.425':
-    resolution: {integrity: sha512-I95xTaAgAvrEGcFxMrkgndRRl3T8u5tGCg1f80QkmNARIHtv9aNX1fieBfUa5HlCsPXx+LH3lPqR1pBKQ9EdbQ==}
-
-  '@tscircuit/high-density-a01@0.0.25':
-    resolution: {integrity: sha512-ilmgACnyrcfe6t1jwy4PmWuILz3ZtVxpQKsSJItx9g+dIE+maiT6eeOEvz5OSQ6vTnTpLwEwMHfmiN8XNDi96w==}
-    peerDependencies:
-      typescript: ^5
-
   '@types/d3-array@3.2.2':
     resolution: {integrity: sha512-hOLWVbm7uRza0BYXpIIW5pxfrKe0W+D5lrFiAEYR+pb6w3N2SwSMaJbXdUfSEv+dT4MfHBLtn5js0LAWaO6otw==}
 
@@ -1382,15 +1371,6 @@ packages:
     resolution: {integrity: sha512-jt2DW/aNFNwke7AUd+Z+e6pz39KO5rzdbbFCg2sGafS4mk13MI7Z8O5z9cADNn5lhGODIgLwug6TZO2ctf7kcw==}
     engines: {node: '>=6.0.0'}
 
-  fast-json-stable-stringify@2.1.0:
-    resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
-
-  flatbush@4.5.1:
-    resolution: {integrity: sha512-5tpuZV/26A5gRYfqyof3/ZTWeARKgZgd9aBrJLGNSGeasdO2PRb/2lIwDHBIuvPhKK2Y4ELuHbRGtegOwH3Lqg==}
-
-  flatqueue@3.0.0:
-    resolution: {integrity: sha512-y1deYaVt+lIc/d2uIcWDNd0CrdQTO5xoCjeFdhX0kSXvm2Acm0o+3bAOiYklTEoRyzwio3sv3/IiBZdusbAe2Q==}
-
   fraction.js@5.3.4:
     resolution: {integrity: sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ==}
 
@@ -1541,10 +1521,6 @@ packages:
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
     engines: {node: '>=0.10.0'}
-
-  object-hash@3.0.0:
-    resolution: {integrity: sha512-RSn9F68PjH9HqtltsSnqYC1XXoWe9Bju5+213R98cNGttag9q9yAOTzdbsqvIa7aNm5WffBZFpWYr2aWrklWAw==}
-    engines: {node: '>= 6'}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -2700,19 +2676,6 @@ snapshots:
       postcss: 8.5.6
       tailwindcss: 4.2.0
 
-  '@tscircuit/capacity-autorouter@0.0.425(typescript@5.7.3)':
-    dependencies:
-      '@tscircuit/high-density-a01': 0.0.25(typescript@5.7.3)
-      fast-json-stable-stringify: 2.1.0
-      object-hash: 3.0.0
-    transitivePeerDependencies:
-      - typescript
-
-  '@tscircuit/high-density-a01@0.0.25(typescript@5.7.3)':
-    dependencies:
-      flatbush: 4.5.1
-      typescript: 5.7.3
-
   '@types/d3-array@3.2.2': {}
 
   '@types/d3-color@3.1.3': {}
@@ -2879,14 +2842,6 @@ snapshots:
 
   fast-equals@5.4.0: {}
 
-  fast-json-stable-stringify@2.1.0: {}
-
-  flatbush@4.5.1:
-    dependencies:
-      flatqueue: 3.0.0
-
-  flatqueue@3.0.0: {}
-
   fraction.js@5.3.4: {}
 
   get-nonce@1.0.1: {}
@@ -3001,8 +2956,6 @@ snapshots:
   node-releases@2.0.27: {}
 
   object-assign@4.1.1: {}
-
-  object-hash@3.0.0: {}
 
   picocolors@1.1.1: {}
 

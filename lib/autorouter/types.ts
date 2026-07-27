@@ -1,6 +1,82 @@
-import type { AutoroutingPipelineSolver } from "@tscircuit/capacity-autorouter"
+export type RouteConnectionPoint = {
+  x: number
+  y: number
+  layer?: string
+  pcb_port_id?: string
+  [key: string]: unknown
+}
 
-export type RouteProblem = ConstructorParameters<typeof AutoroutingPipelineSolver>[0]
+export type RouteObstacle = {
+  center: {
+    x: number
+    y: number
+  }
+  width: number
+  height: number
+  layers: string[]
+  zLayers?: number[]
+  isCopperPour?: boolean
+  [key: string]: unknown
+}
+
+export type RouteWire = {
+  route_type: "wire"
+  x: number
+  y: number
+  layer: string
+  width?: number
+  [key: string]: unknown
+}
+
+export type RouteVia = {
+  route_type: "via"
+  x: number
+  y: number
+  via_diameter?: number
+  [key: string]: unknown
+}
+
+export type RouteJumper = {
+  route_type: "jumper"
+  start: {
+    x: number
+    y: number
+  }
+  end: {
+    x: number
+    y: number
+  }
+  layer: string
+  [key: string]: unknown
+}
+
+export type RouteProblem = {
+  layerCount: number
+  bounds: {
+    minX: number
+    minY: number
+    maxX: number
+    maxY: number
+  }
+  obstacles: RouteObstacle[]
+  connections: Array<{
+    name: string
+    pointsToConnect: RouteConnectionPoint[]
+    [key: string]: unknown
+  }>
+  traces?: Array<{
+    route: Array<RouteWire | RouteVia | RouteJumper>
+    [key: string]: unknown
+  }>
+  outline?: Array<{
+    x: number
+    y: number
+  }>
+  minTraceWidth: number
+  nominalTraceWidth?: number
+  minViaDiameter?: number
+  [key: string]: unknown
+}
 export type ProblemExampleId = "arduino-uno-minimal" | "keyboard"
 export type WorkerPerformanceProfile = "default" | "mobile-safe"
 
