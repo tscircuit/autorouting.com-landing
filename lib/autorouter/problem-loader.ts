@@ -3,30 +3,18 @@ import {
   getProblemExample,
 } from "@/lib/autorouter/problem-examples"
 import { createRouteProblemFromCircuitJson } from "@/lib/autorouter/circuit-json-to-route-problem"
+import { loadLatestKicadToCircuitJson } from "@/lib/autorouter/runtime-packages"
 import type {
+  CircuitJsonElement,
   LoadedRouteProblem,
   ProblemExampleId,
   RouteProblem,
 } from "@/lib/autorouter/types"
 
-const KICAD_TO_CIRCUIT_JSON_ESM_URL =
-  "https://jscdn.tscircuit.com/kicad-to-circuit-json/latest/+esm"
-
 type RouteProblemEnvelope = {
   autorouting_bug_report_id?: string
   title?: string
   simple_route_json: RouteProblem
-}
-
-type CircuitJsonElement = Record<string, any>
-
-type KicadToCircuitJsonModule = {
-  KicadToCircuitJsonConverter: new () => {
-    addFile: (filePath: string, content: string) => void
-    runUntilFinished: () => void
-    getOutput: () => CircuitJsonElement[]
-    getWarnings: () => string[]
-  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -55,7 +43,9 @@ function extractRouteProblem(payload: unknown): {
     const envelope = payload as RouteProblemEnvelope
 
     if (!isRouteProblem(envelope.simple_route_json)) {
-      throw new Error("The uploaded bug report does not contain a valid simple_route_json payload.")
+      throw new Error(
+        "The uploaded bug report does not contain a valid simple_route_json payload.",
+      )
     }
 
     return {
@@ -71,19 +61,27 @@ function extractRouteProblem(payload: unknown): {
     }
   }
 
-  throw new Error("Expected either a simple route JSON object or an autorouter bug-report envelope.")
+  throw new Error(
+    "Expected either a simple route JSON object or an autorouter bug-report envelope.",
+  )
 }
 
 function createLoadedProblem({
   displayName,
   exampleId,
   reportId,
+  circuitJson,
+  converterVersion,
+  routedFileName,
   sourceLabel,
   srj,
 }: {
   displayName: string
   exampleId?: ProblemExampleId
   reportId?: string
+  circuitJson?: CircuitJsonElement[]
+  converterVersion?: string
+  routedFileName?: string
   sourceLabel: string
   srj: RouteProblem
 }): LoadedRouteProblem {
@@ -94,6 +92,9 @@ function createLoadedProblem({
     displayName,
     exampleId,
     reportId,
+    circuitJson,
+    converterVersion,
+    routedFileName,
     sourceLabel,
     srj,
   }
@@ -107,14 +108,6 @@ async function loadProblemPayload(url: string) {
   }
 
   return response.json()
-}
-
-async function importRuntimeModule<T>(url: string): Promise<T> {
-  return import(
-    /* webpackIgnore: true */
-    /* @vite-ignore */
-    url
-  ) as Promise<T>
 }
 
 function normalizeCircuitJsonForSimpleRouteJson(
@@ -179,7 +172,10 @@ export async function loadProblemFromFile(file: File) {
   const { reportId, srj, title } = extractRouteProblem(payload)
 
   return createLoadedProblem({
-    displayName: title?.trim() || file.name.replace(/\.json$/i, "") || "Uploaded route problem",
+    displayName:
+      title?.trim() ||
+      file.name.replace(/\.json$/i, "") ||
+      "Uploaded route problem",
     reportId,
     sourceLabel: file.name,
     srj,
@@ -191,12 +187,8 @@ export async function loadProblemFromKicadFile(file: File) {
     throw new Error("Choose a KiCad PCB file ending in .kicad_pcb.")
   }
 
-  const [converterModule, fileContents] = await Promise.all([
-    importRuntimeModule<KicadToCircuitJsonModule>(
-      KICAD_TO_CIRCUIT_JSON_ESM_URL,
-    ),
-    file.text(),
-  ])
+  const [{ module: converterModule, version }, fileContents] =
+    await Promise.all([loadLatestKicadToCircuitJson(), file.text()])
 
   if (typeof converterModule.KicadToCircuitJsonConverter !== "function") {
     throw new Error(
@@ -214,8 +206,9 @@ export async function loadProblemFromKicadFile(file: File) {
     console.warn("KiCad conversion warnings:", warnings)
   }
 
+  const circuitJson = converter.getOutput() as CircuitJsonElement[]
   const simpleRouteJson = createRouteProblemFromCircuitJson(
-    normalizeCircuitJsonForSimpleRouteJson(converter.getOutput()),
+    normalizeCircuitJsonForSimpleRouteJson(circuitJson),
   )
 
   if (!isRouteProblem(simpleRouteJson)) {
@@ -225,8 +218,11 @@ export async function loadProblemFromKicadFile(file: File) {
   }
 
   return createLoadedProblem({
+    circuitJson,
+    converterVersion: version,
     displayName:
       file.name.replace(/\.kicad_pcb$/i, "").trim() || "Uploaded KiCad PCB",
+    routedFileName: file.name.replace(/\.kicad_pcb$/i, "-routed.kicad_pcb"),
     sourceLabel: file.name,
     srj: simpleRouteJson,
   })

@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@tscircuit/internal-dynamic-import@0.0.13': 6951220435732d3551cafbb59c0d9cf921ff3fb28f9f92537ee2a36b54d7d941
+
 importers:
 
   .:
@@ -92,6 +95,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: 1.2.8
         version: 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@tscircuit/internal-dynamic-import':
+        specifier: ^0.0.13
+        version: 0.0.13(patch_hash=6951220435732d3551cafbb59c0d9cf921ff3fb28f9f92537ee2a36b54d7d941)
       '@vercel/analytics':
         specifier: 1.6.1
         version: 1.6.1(next@16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
@@ -1170,6 +1176,9 @@ packages:
 
   '@tailwindcss/postcss@4.2.0':
     resolution: {integrity: sha512-u6YBacGpOm/ixPfKqfgrJEjMfrYmPD7gEFRoygS/hnQaRtV0VCBdpkx5Ouw9pnaLRwwlgGCuJw8xLpaR0hOrQg==}
+
+  '@tscircuit/internal-dynamic-import@0.0.13':
+    resolution: {integrity: sha512-ji4NIF22ehRjR7G2Kv42epv/Uj2mjcYmpMi+L7Rlf2u8h2IaALjnh6vaL+Wy++a+TkDd/Wlo0/W4cpmG0XPmEQ==}
 
   '@types/d3-array@3.2.2':
     resolution: {integrity: sha512-hOLWVbm7uRza0BYXpIIW5pxfrKe0W+D5lrFiAEYR+pb6w3N2SwSMaJbXdUfSEv+dT4MfHBLtn5js0LAWaO6otw==}
@@ -2675,6 +2684,8 @@ snapshots:
       '@tailwindcss/oxide': 4.2.0
       postcss: 8.5.6
       tailwindcss: 4.2.0
+
+  '@tscircuit/internal-dynamic-import@0.0.13(patch_hash=6951220435732d3551cafbb59c0d9cf921ff3fb28f9f92537ee2a36b54d7d941)': {}
 
   '@types/d3-array@3.2.2': {}
 
