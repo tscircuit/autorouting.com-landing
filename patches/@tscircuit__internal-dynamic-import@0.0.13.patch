@@ -2,11 +2,10 @@ diff --git a/dist/index.js b/dist/index.js
 index 0f7a15f54c761f63781074f49726d69a5909b0f3..f7a122ca1e38fd836da750b4f9e45e3ae05e6cd1 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -16,3 +16,4 @@
+@@ -16,2 +16,3 @@
  var supportedModules = [
 +  "@tscircuit/capacity-autorouter",
    "circuit-json-to-3d-png",
-   "circuit-json-to-bom-csv",
 @@ -35,4 +36,4 @@
  var getModuleName = (specifier) => {
 -  const versionSeparatorIndex = specifier.indexOf("@");
@@ -14,13 +13,7 @@ index 0f7a15f54c761f63781074f49726d69a5909b0f3..f7a122ca1e38fd836da750b4f9e45e3a
 +  const versionSeparatorIndex = specifier.lastIndexOf("@");
 +  return versionSeparatorIndex <= 0 ? specifier : specifier.slice(0, versionSeparatorIndex);
  };
-@@ -61,7 +62,8 @@
- async function importer(specifier) {
-   let lastError;
-   for (const importUrl of getImportUrls(specifier)) {
-     try {
+@@ -65,2 +66,3 @@
        const mod = await import(
 +        /* webpackIgnore: true */
          /* @vite-ignore */
-         importUrl
-       );
