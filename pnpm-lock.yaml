@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@tscircuit/internal-dynamic-import@0.0.13': 6951220435732d3551cafbb59c0d9cf921ff3fb28f9f92537ee2a36b54d7d941
+  '@tscircuit/internal-dynamic-import@0.0.13': bc9be08f73c5da5838245f21ea830f93fa5673d8792318d9182e43b3e3c91a98
 
 importers:
 
@@ -97,7 +97,7 @@ importers:
         version: 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@tscircuit/internal-dynamic-import':
         specifier: ^0.0.13
-        version: 0.0.13(patch_hash=6951220435732d3551cafbb59c0d9cf921ff3fb28f9f92537ee2a36b54d7d941)
+        version: 0.0.13(patch_hash=bc9be08f73c5da5838245f21ea830f93fa5673d8792318d9182e43b3e3c91a98)
       '@vercel/analytics':
         specifier: 1.6.1
         version: 1.6.1(next@16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
@@ -2685,7 +2685,7 @@ snapshots:
       postcss: 8.5.6
       tailwindcss: 4.2.0
 
-  '@tscircuit/internal-dynamic-import@0.0.13(patch_hash=6951220435732d3551cafbb59c0d9cf921ff3fb28f9f92537ee2a36b54d7d941)': {}
+  '@tscircuit/internal-dynamic-import@0.0.13(patch_hash=bc9be08f73c5da5838245f21ea830f93fa5673d8792318d9182e43b3e3c91a98)': {}
 
   '@types/d3-array@3.2.2': {}
 
