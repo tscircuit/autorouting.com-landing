@@ -16,6 +16,7 @@ export type RouteObstacle = {
   layers: string[]
   zLayers?: number[]
   isCopperPour?: boolean
+  ccwRotationDegrees?: number
   [key: string]: unknown
 }
 
@@ -132,6 +133,7 @@ export type RouteGraphicsRect = {
   stroke?: string
   strokeWidth?: number
   layer?: string
+  ccwRotationDegrees?: number
 }
 
 export type RouteGraphicsCircle = {

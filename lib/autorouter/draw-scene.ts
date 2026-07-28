@@ -305,8 +305,12 @@ function drawRects(
     const height = rect.height * viewport.scalePxPerMm
 
     ctx.save()
+    ctx.translate(screenCenter.x, screenCenter.y)
+    // Circuit JSON/SRJ rotations are counter-clockwise in board coordinates,
+    // while canvas coordinates have a downward-positive Y axis.
+    ctx.rotate(-((rect.ccwRotationDegrees ?? 0) * Math.PI) / 180)
     ctx.beginPath()
-    ctx.rect(screenCenter.x - width / 2, screenCenter.y - height / 2, width, height)
+    ctx.rect(-width / 2, -height / 2, width, height)
 
     if (rect.fill) {
       const layerIndices = parseLayerIndices(rect.layer)
