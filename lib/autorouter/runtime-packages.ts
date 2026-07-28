@@ -33,6 +33,21 @@ export type CapacityAutorouterModule<TSolver> = {
   ) => TSolver
 }
 
+export type CircuitToCanvasModule = {
+  CircuitToCanvasDrawer?: new (
+    canvasOrContext: HTMLCanvasElement | CanvasRenderingContext2D,
+  ) => {
+    realToCanvasMat: unknown
+    configure: (config: {
+      colorOverrides?: Record<string, unknown>
+    }) => void
+    drawElements: (
+      elements: Array<Record<string, unknown>>,
+      options?: Record<string, unknown>,
+    ) => void
+  }
+}
+
 async function resolveLatestPackageVersion(packageName: string) {
   const existingPromise = latestVersionPromises.get(packageName)
 
@@ -104,6 +119,17 @@ export async function loadLatestCapacityAutorouter<TSolver>(): Promise<
   const module = (await importer(
     `${packageName}@${version}`,
   )) as CapacityAutorouterModule<TSolver>
+
+  return { module, version }
+}
+
+export async function loadLatestCircuitToCanvas(): Promise<
+  RuntimePackage<CircuitToCanvasModule>
+> {
+  const version = await resolveLatestPackageVersion("circuit-to-canvas")
+  const module = (await importer(
+    `circuit-to-canvas@${version}`,
+  )) as CircuitToCanvasModule
 
   return { module, version }
 }
