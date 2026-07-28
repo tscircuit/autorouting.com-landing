@@ -2,8 +2,15 @@
 
 import { useEffect, useRef, useState } from "react"
 import type { PointerEvent, WheelEvent } from "react"
-import { drawScene } from "@/lib/autorouter/draw-scene"
+import {
+  drawBaseScene,
+  drawOverlayScene,
+} from "@/lib/autorouter/draw-scene"
 import { createInputSrjGraphics } from "@/lib/autorouter/graphics-conversion"
+import {
+  loadLatestCircuitToCanvas,
+  type CircuitToCanvasModule,
+} from "@/lib/autorouter/runtime-packages"
 import {
   createViewport,
   panViewport,
@@ -42,13 +49,16 @@ export function GraphicsCanvas({
   scene,
 }: GraphicsCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const baseCanvasRef = useRef<HTMLCanvasElement>(null)
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
   const dragStateRef = useRef<DragState | null>(null)
   const pointersRef = useRef<Map<number, PointerState>>(new Map())
   const pinchStateRef = useRef<PinchState | null>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
   const [viewport, setViewport] = useState<ViewportMatrices | null>(null)
   const [inputScene, setInputScene] = useState<RouteGraphics | null>(null)
+  const [circuitToCanvasModule, setCircuitToCanvasModule] =
+    useState<CircuitToCanvasModule | null>(null)
 
   useEffect(() => {
     const element = containerRef.current
@@ -108,23 +118,72 @@ export function GraphicsCanvas({
   }, [problem?.id])
 
   useEffect(() => {
-    const canvas = canvasRef.current
+    let cancelled = false
+
+    setCircuitToCanvasModule(null)
+
+    if (!problem?.circuitJson) {
+      return
+    }
+
+    loadLatestCircuitToCanvas()
+      .then(({ module, version }) => {
+        if (typeof module.CircuitToCanvasDrawer !== "function") {
+          throw new Error(
+            "The latest circuit-to-canvas package is missing its drawer export.",
+          )
+        }
+
+        if (!cancelled) {
+          console.info(
+            `Rendering uploaded PCB with circuit-to-canvas@${version}`,
+          )
+          setCircuitToCanvasModule(module)
+        }
+      })
+      .catch((error) => {
+        console.error("Unable to load circuit-to-canvas:", error)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [problem?.id])
+
+  useEffect(() => {
+    const canvas = baseCanvasRef.current
 
     if (!canvas) {
       return
     }
 
-    drawScene({
+    drawBaseScene({
       canvas,
       problem: problem?.srj ?? null,
       baseScene: inputScene,
+      viewport,
+      circuitJson: problem?.circuitJson,
+      circuitToCanvasModule,
+    })
+  }, [circuitToCanvasModule, inputScene, problem, viewport])
+
+  useEffect(() => {
+    const canvas = overlayCanvasRef.current
+
+    if (!canvas) {
+      return
+    }
+
+    drawOverlayScene({
+      canvas,
+      problem: problem?.srj ?? null,
       overlayScene: scene,
       viewport,
     })
-  }, [inputScene, problem, scene, viewport])
+  }, [problem, scene, viewport])
 
   function getCanvasPoint(clientX: number, clientY: number) {
-    const canvas = canvasRef.current
+    const canvas = overlayCanvasRef.current
 
     if (!canvas) {
       return null
@@ -334,7 +393,11 @@ export function GraphicsCanvas({
       className="relative h-full w-full overflow-hidden overscroll-none"
     >
       <canvas
-        ref={canvasRef}
+        ref={baseCanvasRef}
+        className="pointer-events-none absolute inset-0 block h-full w-full"
+      />
+      <canvas
+        ref={overlayCanvasRef}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -342,7 +405,7 @@ export function GraphicsCanvas({
         onPointerLeave={handlePointerLeave}
         onWheel={handleWheel}
         onDoubleClick={resetView}
-        className="block h-full w-full cursor-grab touch-none overscroll-none active:cursor-grabbing"
+        className="absolute inset-0 block h-full w-full cursor-grab touch-none overscroll-none active:cursor-grabbing"
       />
     </div>
   )

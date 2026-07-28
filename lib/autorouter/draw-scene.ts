@@ -5,12 +5,20 @@ import {
   isDefaultTraceColor,
   PCB_VIEWER_COPPER_COLORS,
 } from "@/lib/autorouter/layer-colors"
-import type { RouteGraphics, RouteProblem } from "@/lib/autorouter/types"
+import { getCircuitJsonForCanvas } from "@/lib/autorouter/circuit-json-rendering"
+import type { CircuitToCanvasModule } from "@/lib/autorouter/runtime-packages"
+import type {
+  CircuitJsonElement,
+  RouteGraphics,
+  RouteProblem,
+} from "@/lib/autorouter/types"
 
 const PCB_VIEWER_BACKGROUND = "rgb(0, 16, 35)"
 const PCB_VIEWER_EDGE_CUTS = "rgb(208, 210, 205)"
 const PCB_VIEWER_GRID = "rgb(132, 132, 132)"
 const PCB_VIEWER_GRID_AXES = "rgb(194, 194, 194)"
+const PCB_VIEWER_SILKSCREEN_TOP = "rgb(244, 244, 238)"
+const PCB_VIEWER_SILKSCREEN_BOTTOM = "rgb(180, 190, 207)"
 
 const BACKGROUND_COLOR = PCB_VIEWER_BACKGROUND
 const BOARD_STROKE = withAlpha(PCB_VIEWER_EDGE_CUTS, 0.7)
@@ -407,25 +415,16 @@ function drawCircles(
   }
 }
 
-export function drawScene({
-  canvas,
-  problem,
-  baseScene,
-  overlayScene,
-  viewport,
-}: {
-  canvas: HTMLCanvasElement
-  problem: RouteProblem | null
-  baseScene: RouteGraphics | null
-  overlayScene: RouteGraphics | null
-  viewport: ViewportMatrices | null
-}) {
+function prepareCanvas(
+  canvas: HTMLCanvasElement,
+  viewport: ViewportMatrices | null,
+) {
   const width = viewport?.size.width ?? canvas.clientWidth
   const height = viewport?.size.height ?? canvas.clientHeight
   const context = canvas.getContext("2d")
 
   if (!context || width === 0 || height === 0) {
-    return
+    return null
   }
 
   const dpr = Math.min(window.devicePixelRatio || 1, MAX_CANVAS_DPR)
@@ -439,6 +438,107 @@ export function drawScene({
 
   context.setTransform(dpr, 0, 0, dpr, 0, 0)
   context.clearRect(0, 0, width, height)
+
+  return {
+    context,
+    height,
+    width,
+  }
+}
+
+function drawCircuitJson({
+  circuitJson,
+  circuitToCanvasModule,
+  context,
+  viewport,
+}: {
+  circuitJson: CircuitJsonElement[]
+  circuitToCanvasModule: CircuitToCanvasModule
+  context: CanvasRenderingContext2D
+  viewport: ViewportMatrices
+}) {
+  const Drawer = circuitToCanvasModule.CircuitToCanvasDrawer
+
+  if (typeof Drawer !== "function") {
+    return false
+  }
+
+  const drawer = new Drawer(context)
+  const colorOverrides = {
+    boardOutline: BOARD_STROKE,
+    copper: PCB_VIEWER_COPPER_COLORS,
+    drill: BACKGROUND_COLOR,
+    keepout: {
+      top: withAlpha(PCB_VIEWER_COPPER_COLORS.top, 0.35),
+      bottom: withAlpha(PCB_VIEWER_COPPER_COLORS.bottom, 0.35),
+    },
+    silkscreen: {
+      top: PCB_VIEWER_SILKSCREEN_TOP,
+      bottom: PCB_VIEWER_SILKSCREEN_BOTTOM,
+    },
+  }
+  const drawOptions = {
+    drawBoardMaterial: false,
+    drawSoldermask: false,
+    minBoardOutlineStrokePx: 1.5,
+    showPcbNotes: false,
+  }
+  const elements = getCircuitJsonForCanvas(circuitJson) as Array<
+    Record<string, unknown>
+  >
+  const physicalElements = elements.filter(
+    (element) =>
+      typeof element.type !== "string" ||
+      !element.type.startsWith("pcb_silkscreen_"),
+  )
+  const silkscreenElements = elements.filter(
+    (element) =>
+      typeof element.type === "string" &&
+      element.type.startsWith("pcb_silkscreen_"),
+  )
+
+  drawer.realToCanvasMat = viewport.mmToPx
+  drawer.configure({ colorOverrides })
+  drawer.drawElements(physicalElements, drawOptions)
+
+  // Draw silkscreen separately so knockout text cannot leave the canvas in a
+  // compositing mode that erases copper and holes drawn after it.
+  context.globalCompositeOperation = "source-over"
+
+  if (silkscreenElements.length > 0) {
+    const silkscreenDrawer = new Drawer(context)
+
+    silkscreenDrawer.realToCanvasMat = viewport.mmToPx
+    silkscreenDrawer.configure({ colorOverrides })
+    silkscreenDrawer.drawElements(silkscreenElements, drawOptions)
+    context.globalCompositeOperation = "source-over"
+  }
+
+  return true
+}
+
+export function drawBaseScene({
+  canvas,
+  problem,
+  baseScene,
+  viewport,
+  circuitJson,
+  circuitToCanvasModule,
+}: {
+  canvas: HTMLCanvasElement
+  problem: RouteProblem | null
+  baseScene: RouteGraphics | null
+  viewport: ViewportMatrices | null
+  circuitJson?: CircuitJsonElement[]
+  circuitToCanvasModule: CircuitToCanvasModule | null
+}) {
+  const preparedCanvas = prepareCanvas(canvas, viewport)
+
+  if (!preparedCanvas) {
+    return
+  }
+
+  const { context, height, width } = preparedCanvas
   context.fillStyle = BACKGROUND_COLOR
   context.fillRect(0, 0, width, height)
 
@@ -447,13 +547,48 @@ export function drawScene({
   }
 
   drawGrid(context, viewport)
+
+  if (
+    circuitJson &&
+    circuitToCanvasModule &&
+    drawCircuitJson({
+      circuitJson,
+      circuitToCanvasModule,
+      context,
+      viewport,
+    })
+  ) {
+    return
+  }
+
   drawBoard(context, problem, viewport)
   drawLines(context, baseScene?.lines, viewport, "lower")
-  drawLines(context, overlayScene?.lines, viewport, "lower")
   drawRects(context, baseScene?.rects, viewport, problem.layerCount)
-  drawRects(context, overlayScene?.rects, viewport, problem.layerCount)
   drawLines(context, baseScene?.lines, viewport, "top")
-  drawLines(context, overlayScene?.lines, viewport, "top")
   drawCircles(context, baseScene?.circles, viewport)
+}
+
+export function drawOverlayScene({
+  canvas,
+  problem,
+  overlayScene,
+  viewport,
+}: {
+  canvas: HTMLCanvasElement
+  problem: RouteProblem | null
+  overlayScene: RouteGraphics | null
+  viewport: ViewportMatrices | null
+}) {
+  const preparedCanvas = prepareCanvas(canvas, viewport)
+
+  if (!preparedCanvas || !viewport || !problem) {
+    return
+  }
+
+  const { context } = preparedCanvas
+
+  drawLines(context, overlayScene?.lines, viewport, "lower")
+  drawRects(context, overlayScene?.rects, viewport, problem.layerCount)
+  drawLines(context, overlayScene?.lines, viewport, "top")
   drawCircles(context, overlayScene?.circles, viewport)
 }
