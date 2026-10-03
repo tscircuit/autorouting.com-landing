@@ -2,7 +2,11 @@ import {
   createSolvedTraceGraphics,
   sanitizeRouteGraphics,
 } from "@/lib/autorouter/graphics-conversion"
-import { loadLatestCapacityAutorouter } from "@/lib/autorouter/runtime-packages"
+import {
+  AutoroutingPipelineSolver7_MultiGraph,
+  type SimpleRouteJson,
+} from "@tscircuit/capacity-autorouter"
+import { version as autorouterVersion } from "@tscircuit/capacity-autorouter/package.json"
 import type {
   AutorouterSnapshot,
   AutorouterWorkerInbound,
@@ -10,22 +14,6 @@ import type {
   SolverRenderMode,
   WorkerPerformanceProfile,
 } from "@/lib/autorouter/types"
-
-type RuntimeAutorouterSolver = {
-  solved: boolean
-  failed: boolean
-  error: string | null
-  iterations: number
-  progress: number
-  step: () => void
-  preview: () => {
-    rects?: unknown[]
-    circles?: unknown[]
-    lines?: unknown[]
-  }
-  getCurrentPhase?: () => string
-  getOutputSimpleRouteJson: () => AutorouterWorkerInbound["srj"]
-}
 
 const WORKER_PROFILE_CONFIG: Record<
   WorkerPerformanceProfile,
@@ -65,14 +53,14 @@ function getErrorMessage(error: unknown) {
 }
 
 function createSnapshot(
-  solver: RuntimeAutorouterSolver,
+  solver: AutoroutingPipelineSolver7_MultiGraph,
   renderMode: SolverRenderMode,
   startedAt: number,
   autorouterVersion: string,
 ): AutorouterSnapshot {
   const outputSrj =
     renderMode === "output-traces"
-      ? solver.getOutputSimpleRouteJson()
+      ? (solver.getOutputSimpleRouteJson() as unknown as AutorouterWorkerInbound["srj"])
       : undefined
   const view = outputSrj
     ? createSolvedTraceGraphics(outputSrj)
@@ -99,32 +87,18 @@ function sleep(durationMs: number) {
   })
 }
 
-async function loadPipeline7() {
-  const { module, version } =
-    await loadLatestCapacityAutorouter<RuntimeAutorouterSolver>()
-  const Pipeline7 = module.AutoroutingPipelineSolver7_MultiGraph
-
-  if (typeof Pipeline7 !== "function") {
-    throw new Error(
-      "The latest @tscircuit/capacity-autorouter package does not export Pipeline7.",
-    )
-  }
-
-  return { Pipeline7, version }
-}
-
 async function runSolver(message: AutorouterWorkerInbound, runId: number) {
   try {
-    const { Pipeline7, version } = await loadPipeline7()
-
     if (runId !== activeRunId) {
       return
     }
 
     console.info(
-      `Routing with @tscircuit/capacity-autorouter@${version} Pipeline7`,
+      `Routing with @tscircuit/capacity-autorouter@${autorouterVersion} Pipeline7`,
     )
-    const solver = new Pipeline7(message.srj)
+    const solver = new AutoroutingPipelineSolver7_MultiGraph(
+      message.srj as unknown as SimpleRouteJson,
+    )
     const profileConfig = WORKER_PROFILE_CONFIG[message.profile ?? "default"]
     const startedAt = performance.now()
     let lastSnapshotAt = -Infinity
@@ -132,7 +106,7 @@ async function runSolver(message: AutorouterWorkerInbound, runId: number) {
 
     postMessageToMain({
       type: "started",
-      snapshot: createSnapshot(solver, "preview", startedAt, version),
+      snapshot: createSnapshot(solver, "preview", startedAt, autorouterVersion),
     })
 
     while (!solver.solved && !solver.failed && runId === activeRunId) {
@@ -161,7 +135,9 @@ async function runSolver(message: AutorouterWorkerInbound, runId: number) {
       ) {
         postMessageToMain({
           type: "snapshot",
-          snapshot: createSnapshot(solver, renderMode, startedAt, version),
+          snapshot: createSnapshot(
+            solver, renderMode, startedAt, autorouterVersion,
+          ),
         })
         lastSnapshotAt = now
         publishedTerminalSnapshot = solver.solved || solver.failed
@@ -180,7 +156,7 @@ async function runSolver(message: AutorouterWorkerInbound, runId: number) {
         solver,
         solver.solved ? "output-traces" : "preview",
         startedAt,
-        version,
+        autorouterVersion,
       ),
     })
   } catch (error) {

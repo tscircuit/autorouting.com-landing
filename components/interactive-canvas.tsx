@@ -29,11 +29,14 @@ export function InteractiveCanvas({
   const [workerProfile, setWorkerProfile] =
     useState<WorkerPerformanceProfile>("default")
   const activeProblem = hasStartedSolver ? problem : null
-  const { snapshot, workerError } = useAutorouterWorker(
+  const { snapshot, workerState, workerError } = useAutorouterWorker(
     activeProblem,
     workerProfile,
   )
-  const errorMessage = loadError ?? workerError
+  const errorMessage =
+    loadError ?? workerError ?? (snapshot?.failed
+      ? snapshot.error || "The autorouter could not route this board."
+      : null)
   const emptyMessage = isLoading
     ? "Loading example..."
     : errorMessage
@@ -74,6 +77,18 @@ export function InteractiveCanvas({
       />
       {showStartOverlay ? (
         <StartOverlay onStart={() => setHasStartedSolver(true)} />
+      ) : null}
+      {hasStartedSolver && !isLoading && !errorMessage ? (
+        <div
+          role="status"
+          className="pointer-events-none absolute bottom-4 left-4 rounded-md bg-black/65 px-3 py-2 text-xs text-white/80"
+        >
+          {workerState === "starting"
+            ? "Starting autorouter..."
+            : snapshot?.solved
+              ? "Routing complete"
+              : "Routing board..."}
+        </div>
       ) : null}
       {emptyMessage ? (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-white/60">
