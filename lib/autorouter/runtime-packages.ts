@@ -27,12 +27,6 @@ type CircuitJsonToKicadModule = {
   }
 }
 
-export type CapacityAutorouterModule<TSolver> = {
-  AutoroutingPipelineSolver7_MultiGraph?: new (
-    srj: Record<string, unknown>,
-  ) => TSolver
-}
-
 export type CircuitToCanvasModule = {
   CircuitToCanvasDrawer?: new (
     canvasOrContext: HTMLCanvasElement | CanvasRenderingContext2D,
@@ -106,19 +100,7 @@ export async function loadLatestCircuitJsonToKicad(): Promise<
   const version = await resolveLatestPackageVersion("circuit-json-to-kicad")
   const module = (await importer(
     `circuit-json-to-kicad@${version}`,
-  )) as CircuitJsonToKicadModule
-
-  return { module, version }
-}
-
-export async function loadLatestCapacityAutorouter<TSolver>(): Promise<
-  RuntimePackage<CapacityAutorouterModule<TSolver>>
-> {
-  const packageName = "@tscircuit/capacity-autorouter"
-  const version = await resolveLatestPackageVersion(packageName)
-  const module = (await importer(
-    `${packageName}@${version}`,
-  )) as CapacityAutorouterModule<TSolver>
+  )) as unknown as CircuitJsonToKicadModule
 
   return { module, version }
 }
@@ -129,7 +111,7 @@ export async function loadLatestCircuitToCanvas(): Promise<
   const version = await resolveLatestPackageVersion("circuit-to-canvas")
   const module = (await importer(
     `circuit-to-canvas@${version}`,
-  )) as CircuitToCanvasModule
+  )) as unknown as CircuitToCanvasModule
 
   return { module, version }
 }
